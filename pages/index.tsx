@@ -6,6 +6,14 @@ import {useDispatch, useSelector} from 'react-redux';
 //import {setGlobalMovies,setFilterMovies,setMovies} from '../slice/sliceMovie'
 import {setGlobalMovies} from '../slice/sliceMovie'
 import { useRouter } from 'next/router';
+
+import {Filter} from '../components/Filter';
+import {filterMovies} from '../services/axios.services';
+import { Genres } from '@/components/Genres';
+import {getGenersData} from '../services/axios.services';
+import {querySearch} from '../services/axios.services';
+
+// import {fetchMovies} from '../services/axios.services';
 // typeScript defining type of variable
 // interface MoviesInterface {
 //   id :  number, 
@@ -21,6 +29,9 @@ export default function Home() {
   //for storing array of objects <MoviesInterface[]> and for only object <MoviesInterface>
  // const [movies,setMovies] = useState<Movie[]>([]);
   //const [searchQuery, setSearchQuery] = useState("");
+  
+  const [filter, setFilter] = useState<string>("");
+  const [genres, setGenres] = useState<object[]>([]);
 
   const router = useRouter();
 
@@ -86,23 +97,13 @@ export default function Home() {
   //   console.log('original',filterMovies);
   // }
 
- // For concept of debouncing
-  useEffect(()=>{ 
-    const debounceFn = setTimeout(() => {
-        searchResult(searchQuery);
-    }, 500);
-    return () => clearTimeout(debounceFn);
-  },[searchQuery]);
 
+
+/*------------------------------- Search Query --------------------------------------------- */
   const searchResult = async(searchQuery: string) => {
     console.log(searchQuery);
     if (searchQuery.length > 0) {
-      const resp = await axios.get(`https://api.themoviedb.org/3/search/movie?query=${searchQuery}`,{
-        headers: {
-          Authorization:
-              "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4YzEyOWNjMTMyODY1YjVmZWZjMGJjNzdmOGRhY2ZmNyIsInN1YiI6IjY0YTY1OTUzMDM5OGFiMDEyZDU0NGRmMCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.OSVVq_F3xzstBO3uy0r5FmeEfrJMEiN4gVXkU9d5Uhs",
-        },
-      });
+      const resp = await querySearch(`${searchQuery}`);
       dispatch(setGlobalMovies(resp.data.results));
     } else {
       // console.log('original',originalMovies);
@@ -111,7 +112,54 @@ export default function Home() {
       fetchMovies(url);
     }
   }
+   // For concept of debouncing
+   useEffect(()=>{ 
+    const debounceFn = setTimeout(() => {
+        searchResult(searchQuery);
+    }, 500);
+    return () => clearTimeout(debounceFn);
+  },[searchQuery]);
 
+/*----------------------------------------------- Filter--------------------------------------------------- */
+const searchByFilter = async() => {
+
+  if(filter && filter !== ""){
+
+    const filterMovie = await filterMovies(`sort_by=${filter}`);
+    //console.log(filterMovie.data.results)
+    dispatch(setGlobalMovies(filterMovie.data.results));
+  }
+};
+
+useEffect(() => {
+  searchByFilter();
+},[filter]);
+
+/*------------------------------------------handleFilterChange-------------------------------------------------------------- */
+ const handleFilterChange = (e:any) => {
+  e.preventDefault();
+  setFilter(e.target.value);
+ };
+/*-------------------------------------------handleGenresChange------------------------------------------------------------------------*/
+const handleGenresChange = async(e:any) =>{
+  e.preventDefault();
+  console.log(e.target.value);
+  const genresList  = await filterMovies(`with_genres=${e.target.value}`)
+  dispatch(setGlobalMovies(genresList.data.results))
+  console.log(genresList.data.results)
+}
+
+/*---------------------------------------------getGenersData------------------------------------------------------------------------------------------ */
+const getGenersList = async() => {
+  const response = await getGenersData();
+  console.log(response.data.genres)
+  setGenres(response.data.genres);
+}
+
+useEffect(() => {
+  getGenersList();
+},[]);
+/*-------------------------------------------------------------------------------------------------------------------------------------------------- */
 
   return( 
       <>  
@@ -126,14 +174,28 @@ export default function Home() {
           {/* For debouncing concept */}
           <span>{searchQuery}</span>
           <br />
-          <input 
-              type="search" 
-              placeholder= "Search movies here" 
-              onChange={(e: any) => setSearchquery(e.target.value)}
-          /> 
-          <div className="container mx-auto px-8 py-8 ">
-            <h1 className='text-2xl font-bold mb-4'>Popular Movies</h1>
-            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'> 
+
+
+          <div className="container md:mx-auto px-8 py-8 ">
+            <div className=' flex flex-wrap justify-center items-center py-8'>
+                  <div className='pb-5 pr-5'>
+                    <Filter handleFilterChange = {handleFilterChange}/>
+                  </div>
+                  <div className='pb-6 pr-5'>
+                    <Genres genres = {genres} handleGenresChange ={handleGenresChange}/>
+                  </div>
+                <div className="text-gray-600">
+                    <input 
+                      className="border-2 border-gray-300 bg-white h-11 px-5 pr-16 rounded-lg text-sm focus:outline-none"
+                      type="search" 
+                      name="search" 
+                      placeholder="Search"
+                      onChange={(e: any) => setSearchquery(e.target.value)}
+                    />
+                </div>
+            </div>
+            <h1 className='text-3xl font-bold mb-4 pl-5'>Popular Movies</h1>
+            <div className='grid grid-cols-1 pl-5 sm:grid-cols-2 md:grid-cols-3  lg:grid-cols-4 xl:grid-cols-5 gap-y-4'> 
               { 
                 movies.length > 0 && movies !== undefined &&
                 movies.map((movie: any) => {
@@ -141,7 +203,7 @@ export default function Home() {
                     <MovieCardList 
                                 key = {movie.id} 
                                 title ={movie.title}
-                                poster = {'https://image.tmdb.org/t/p/w500' + movie.poster_path}
+                                poster = { movie.poster_path?'https://image.tmdb.org/t/p/w500' + movie.poster_path:""}
                                 releaseDate = {movie.release_date}
                                 rating = {movie.vote_average}
                     />
@@ -153,4 +215,3 @@ export default function Home() {
       </>
   );
 }
-// https://api.themoviedb.org/3/movie/popular?api_key=8c129cc132865b5fefc0bc77f8dacff7
