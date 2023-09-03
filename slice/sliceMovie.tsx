@@ -9,7 +9,7 @@ const initialState: MoviesInterface = {
   //  originalMovies: [],
 };
 const  movieSlice = createSlice({
-    name: 'Movies',
+    name: 'movies',
     initialState,
     reducers: {
         setGlobalMovies: (state,moviesData) => {

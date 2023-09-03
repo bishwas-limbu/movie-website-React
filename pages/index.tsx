@@ -1,7 +1,7 @@
 import {useState,useEffect} from 'react'
 import axios from 'axios'
 import MovieCardList from '../components/MovieCardList'
-import {Movie} from '../interface/globalInterface'
+//import {Movie} from '../interface/globalInterface'
 import {useDispatch, useSelector} from 'react-redux';
 //import {setGlobalMovies,setFilterMovies,setMovies} from '../slice/sliceMovie'
 import {setGlobalMovies} from '../slice/sliceMovie'
@@ -26,6 +26,7 @@ import {querySearch} from '../services/axios.services';
 export default function Home() {
 
   const url = "https://api.themoviedb.org/3/movie/popular?api_key=8c129cc132865b5fefc0bc77f8dacff7";
+  //const url = 'https://fakestoreapi.com/products';
   //for storing array of objects <MoviesInterface[]> and for only object <MoviesInterface>
  // const [movies,setMovies] = useState<Movie[]>([]);
   //const [searchQuery, setSearchQuery] = useState("");
@@ -197,7 +198,7 @@ useEffect(() => {
             <h1 className='text-3xl font-bold mb-4 pl-5'>Popular Movies</h1>
             <div className='grid grid-cols-1 pl-5 sm:grid-cols-2 md:grid-cols-3  lg:grid-cols-4 xl:grid-cols-5 gap-y-4'> 
               { 
-                movies.length > 0 && movies !== undefined &&
+                 movies !== undefined &&
                 movies.map((movie: any) => {
                   return (
                     <MovieCardList 
